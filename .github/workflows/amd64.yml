@@ -32,9 +32,9 @@ jobs:
           images="${{ github.event.inputs.docker_images }}"
           IFS=',' read -r -a image_array <<< "$images"
           for image in "${image_array[@]}"; do
-            docker pull "${name_space}/${image}" --platform "linux/amd64"
-            docker save "${name_space}/${image}" -o "${image//\//_}-amd64.tar"
-            docker tag "${name_space}/${image}" "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}" 
+            docker pull "${name_space}${image}" --platform "linux/amd64"
+            docker save "${name_space}${image}" -o "${image//\//_}-amd64.tar"
+            docker tag "${name_space}${image}" "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}" 
             docker push "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}"
           done
 
