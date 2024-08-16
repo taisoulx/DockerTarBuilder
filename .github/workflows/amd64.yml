@@ -4,37 +4,46 @@ on:
   workflow_dispatch:
     inputs:
       docker_images:
-        description: '请填写docker镜像名称 多个用英文逗号分开'
+        description: "请填写docker镜像名称 多个用英文逗号分开"
         required: true
-        default: 'alpine:latest,ubuntu:latest'  # 设置默认的 Docker 镜像列表
+        default: "alpine:latest" # 设置默认的 Docker 镜像列表
 
 jobs:
   pull_and_package:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Pull Docker Images and Package
-      run: |
-        images="${{ github.event.inputs.docker_images }}"
-        IFS=',' read -r -a image_array <<< "$images"
-        for image in "${image_array[@]}"; do
-          docker pull "${image}" --platform "linux/amd64"
-          docker save "${image}" -o "${image//\//_}-amd64.tar"
-        done
+      - name: login to Aliyun Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: registry.cn-shenzhen.aliyuncs.com
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Compress the TAR files
-      run: tar -czf x86-64-images.tar.gz *-amd64.tar
+      - name: Pull Docker Images and Package
+        run: |
+          images="${{ github.event.inputs.docker_images }}"
+          IFS=',' read -r -a image_array <<< "$images"
+          for image in "${image_array[@]}"; do
+            docker pull "${image}" --platform "linux/amd64"
+            docker save "${image}" -o "${image//\//_}-amd64.tar"
+            docker tag "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image} ${image}"
+            docker push "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}"
+          done
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-images-tar
-        path: x86-64-images.tar.gz
-        retention-days: 1  # 将保留天数设置为 1 天 最多可设置90天
+      - name: Compress the TAR files
+        run: tar -czf x86-64-images.tar.gz *-amd64.tar
 
-    - name: Clean up intermediate files
-      run: |
-        rm *-amd64.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images-tar
+          path: x86-64-images.tar.gz
+          retention-days: 1 # 将保留天数设置为 1 天 最多可设置90天
+
+      - name: Clean up intermediate files
+        run: |
+          rm *-amd64.tar
