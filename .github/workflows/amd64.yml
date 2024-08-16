@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       docker_images:
-        description: "请填写docker镜像名称 多个用英文逗号分开"
+        description: "请填写docker镜像名称一个"
         required: true
         default: "alpine:latest" # 设置默认的 Docker 镜像列表
+      name_space:
+        description: "请填写docker镜像命名空间，可为空"
+        required: true
+        default: "bitnami" # 设置默认的 Docker 镜像列表
 
 jobs:
   pull_and_package:
@@ -28,9 +32,9 @@ jobs:
           images="${{ github.event.inputs.docker_images }}"
           IFS=',' read -r -a image_array <<< "$images"
           for image in "${image_array[@]}"; do
-            docker pull "${image}" --platform "linux/amd64"
-            docker save "${image}" -o "${image//\//_}-amd64.tar"
-            docker tag "${image}" "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}" 
+            docker pull "${name_space}/${image}" --platform "linux/amd64"
+            docker save "${name_space}/${image}" -o "${image//\//_}-amd64.tar"
+            docker tag "${name_space}/${image}" "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}" 
             docker push "registry.cn-shenzhen.aliyuncs.com/ziyangk/${image}"
           done
 
