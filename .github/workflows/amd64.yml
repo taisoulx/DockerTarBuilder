@@ -10,7 +10,7 @@ on:
       name_space:
         description: "请填写docker镜像命名空间，可为空"
         required: false
-        default: "hlebalbau/" # 设置默认的 Docker 镜像列表
+        default: "" # 设置默认的 Docker 镜像列表
 
 jobs:
   pull_and_package:
